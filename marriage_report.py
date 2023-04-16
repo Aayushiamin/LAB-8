@@ -1,3 +1,4 @@
+
 """
 Description:
  Generates a CSV reports containing all married couples in
@@ -9,13 +10,14 @@ Usage:
 import os
 import sqlite3
 from create_relationships import db_path
+import pandas as pd 
 
 def main():
     # Query DB for list of married couples
     married_couples = get_married_couples()
 
     # Save all married couples to CSV file
-    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'married_couples.csv')
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(db_path)), 'married_couples.csv')
     save_married_couples_csv(married_couples, csv_path)
 
 def get_married_couples():
@@ -26,6 +28,24 @@ def get_married_couples():
     """
     # TODO: Function body
     con = sqlite3.connect(db_path)
+    con = sqlite3.connect('social_network.db')
+    cur = con.cursor()
+    # SQL query to get all relationships
+    relationships_query = """
+        SELECT person1.name, person2.name, start_date, type FROM relationships
+        JOIN people person1 ON person1_id = person1.id
+        JOIN people person2 ON person2_id = person2.id;
+        WHERE type = 'spouse';
+    """
+    # Execute the query and get all results
+    cur.execute(relationships_query)
+    married_Couples = cur.fetchall()
+    con.close()
+
+    for person1, person2, start_date, type in married_Couples:
+        
+        print(f'{person1} has been a {type} of {person2} since {start_date}.')
+
     return
 
 def save_married_couples_csv(married_couples, csv_path):
@@ -37,6 +57,9 @@ def save_married_couples_csv(married_couples, csv_path):
         csv_path (str): Path of CSV file
     """
     # TODO: Function body
+    Relationship_df = pd.DataFrame(married_couples, columns=['Person1', 'Person2', 'Start_Date'])
+    Relationship_df.to_csv(csv_path, index=False,)
+    
     return
 
 if __name__ == '__main__':
